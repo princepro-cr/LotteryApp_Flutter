@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucky_dip/models/lottery_slip.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/animation.dart';
-import 'package:confetti/confetti.dart';
+ import 'package:confetti/confetti.dart';
 import '../view_models/lottery_view_model.dart';
 import '../theme/app_colors.dart';
 import '../utils/responsive_helper.dart';
@@ -169,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             child: Container(
               padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
-                color: AppColors.error,
+                color:  AppColors.error, 
                 shape: BoxShape.circle,
               ),
               constraints: const BoxConstraints(
@@ -271,11 +270,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.white.withOpacity(0.3)),
       ),
-      child: Row(
+      child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.schedule, color: AppColors.white, size: 16),
-          const SizedBox(width: 8),
+            SizedBox(width: 8),
           Text(
             'Next draw: Today 20:00',
             style: TextStyle(
@@ -364,7 +363,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               color: AppColors.textSecondary,
             ),
@@ -594,7 +593,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           leading: Container(
             width: isSmallScreen ? 36.0 : 40.0,
             height: isSmallScreen ? 36.0 : 40.0,
-            decoration: BoxDecoration(
+            decoration:const BoxDecoration(
               gradient: AppColors.primaryGradient,
               shape: BoxShape.circle,
             ),
@@ -740,11 +739,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           color: AppColors.error.withOpacity(0.1),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Row(
+        child:  const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.clear_all, size: 14, color: AppColors.error),
-            const SizedBox(width: 4),
+              SizedBox(width: 4),
             Text(
               'Clear All',
               style: TextStyle(
@@ -804,8 +803,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final viewModel = context.read<LotteryViewModel>();
     if (viewModel.slips.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please add at least one slip first'),
+       const  SnackBar(
+          content:  Text('Please add at least one slip first'),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -848,7 +847,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               viewModel.removeSlip(slipId);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
+               const SnackBar(
                   content: const Text('Slip deleted successfully'),
                   backgroundColor: AppColors.success,
                   behavior: SnackBarBehavior.floating,
@@ -879,8 +878,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               viewModel.clearSlips();
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('All slips cleared successfully'),
+               const SnackBar(
+                  content:   Text('All slips cleared successfully'),
                   backgroundColor: AppColors.success,
                   behavior: SnackBarBehavior.floating,
                 ),
