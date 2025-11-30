@@ -169,7 +169,7 @@ class _QuickPickScreenState extends State<QuickPickScreen> {
   }
 
   Widget _buildCostSection() {
-    final totalCost = _slipCount * 2.0;
+    final totalCost = _slipCount * 12;
     
     return Card(
       elevation: 2,
@@ -191,7 +191,7 @@ class _QuickPickScreenState extends State<QuickPickScreen> {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Slips × \$2.00',
+                  'Slips × \R12.00',
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textDisabled,

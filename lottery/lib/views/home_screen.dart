@@ -3,6 +3,7 @@ import 'package:lucky_dip/models/lottery_slip.dart';
 import 'package:provider/provider.dart';
 import '../view_models/lottery_view_model.dart';
 import '../theme/app_colors.dart';
+import '../utils/responsive_helper.dart';
 import 'slip_entry_screen.dart';
 import 'results_screen.dart';
 import 'stats_screen.dart';
@@ -13,15 +14,18 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Lucky Dip Lottery',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 24,
-            color: AppColors.white,
+            fontSize: isSmallScreen ? 20.0 : 24.0,
           ),
         ),
         backgroundColor: AppColors.primary,
@@ -30,7 +34,7 @@ class HomeScreen extends StatelessWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.leaderboard),
+            icon: Icon(isSmallScreen ? Icons.bar_chart : Icons.leaderboard),
             onPressed: () {
               Navigator.push(
                 context,
@@ -41,105 +45,129 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Consumer<LotteryViewModel>(
-        builder: (context, viewModel, child) {
-          return Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              children: [
-                // Statistics Overview Card
-                _buildStatsOverview(context, viewModel),
-                
-                const SizedBox(height: 24),
-                
-                // Quick Actions Grid
-                _buildQuickActions(context),
-                
-                const SizedBox(height: 24),
-                
-                // Recent Slips Section
-                if (viewModel.slips.isNotEmpty) 
-                  _buildRecentSlips(context, viewModel),
-              ],
-            ),
-          );
-        },
+      body: SafeArea(
+        child: Consumer<LotteryViewModel>(
+          builder: (context, viewModel, child) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: ResponsiveHelper.getPadding(context),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: screenHeight - MediaQuery.of(context).padding.vertical,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Statistics Overview Card
+                    _buildStatsOverview(context, viewModel),
+                    
+                    SizedBox(height: isSmallScreen ? 16.0 : 24.0),
+                    
+                    // Quick Actions Grid
+                    _buildQuickActions(context),
+                    
+                    SizedBox(height: isSmallScreen ? 16.0 : 24.0),
+                    
+                    // Recent Slips Section - Only show if we have slips
+                    if (viewModel.slips.isNotEmpty) 
+                      _buildRecentSlips(context, viewModel),
+                    
+                    // Add some bottom padding
+                    SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 
   Widget _buildStatsOverview(BuildContext context, LotteryViewModel viewModel) {
+    final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
+    
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isSmallScreen ? 16.0 : 24.0),
       decoration: BoxDecoration(
         gradient: AppColors.primaryGradient,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [AppColors.cardShadow],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.auto_awesome,
-            size: 40,
+            size: isSmallScreen ? 32.0 : 40.0,
             color: AppColors.white,
           ),
-          const SizedBox(height: 12),
-          const Text(
+          SizedBox(height: isSmallScreen ? 8.0 : 12.0),
+          Text(
             'Lottery Dashboard',
             style: TextStyle(
               color: AppColors.white,
-              fontSize: 20,
+              fontSize: isSmallScreen ? 18.0 : 20.0,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStatItem(
-                context,
-                'Slips',
-                viewModel.slips.length.toString(),
-                Icons.confirmation_number,
-              ),
-              _buildStatItem(
-                context,
-                'Cost',
-                '\$${viewModel.totalCost.toStringAsFixed(0)}',
-                Icons.attach_money,
-              ),
-              _buildStatItem(
-                context,
-                'Draws',
-                viewModel.drawHistory.length.toString(),
-                Icons.celebration,
-              ),
-            ],
-          ),
+          SizedBox(height: isSmallScreen ? 12.0 : 16.0),
+          _buildStatsGrid(context, viewModel),
         ],
       ),
     );
   }
 
+  Widget _buildStatsGrid(BuildContext context, LotteryViewModel viewModel) {
+    final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
+    
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _buildStatItem(
+          context,
+          'Slips',
+          viewModel.slips.length.toString(),
+          Icons.confirmation_number,
+        ),
+        _buildStatItem(
+          context,
+          'Cost',
+          '\$${viewModel.totalCost.toStringAsFixed(0)}',
+          Icons.attach_money,
+        ),
+        _buildStatItem(
+          context,
+          'Draws',
+          viewModel.drawHistory.length.toString(),
+          Icons.celebration,
+        ),
+      ],
+    );
+  }
+
   Widget _buildStatItem(BuildContext context, String label, String value, IconData icon) {
+    final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
+    
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 50,
-          height: 50,
+          width: isSmallScreen ? 40.0 : 50.0,
+          height: isSmallScreen ? 40.0 : 50.0,
           decoration: BoxDecoration(
             color: AppColors.white.withOpacity(0.2),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: AppColors.white, size: 24),
+          child: Icon(icon, color: AppColors.white, size: isSmallScreen ? 20.0 : 24.0),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: isSmallScreen ? 4.0 : 8.0),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.white,
-            fontSize: 16,
+            fontSize: isSmallScreen ? 14.0 : 16.0,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -147,7 +175,7 @@ class HomeScreen extends StatelessWidget {
           label,
           style: TextStyle(
             color: AppColors.white.withOpacity(0.8),
-            fontSize: 12,
+            fontSize: isSmallScreen ? 10.0 : 12.0,
           ),
         ),
       ],
@@ -155,14 +183,18 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildQuickActions(BuildContext context) {
+    final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
+    final crossAxisCount = isSmallScreen ? 2 : 3;
+    final childAspectRatio = isSmallScreen ? 1.2 : 1.4;
+
     return GridView(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1.2,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: isSmallScreen ? 12.0 : 16.0,
+        mainAxisSpacing: isSmallScreen ? 12.0 : 16.0,
+        childAspectRatio: childAspectRatio,
       ),
       children: [
         _buildActionCard(
@@ -212,7 +244,7 @@ class HomeScreen extends StatelessWidget {
             }
           },
         ),
-        _buildActionCard(
+        if (!isSmallScreen) _buildActionCard(
           context,
           Icons.history,
           'Past Results',
@@ -247,6 +279,8 @@ class HomeScreen extends StatelessWidget {
     Color color,
     VoidCallback onTap,
   ) {
+    final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
+    
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -254,7 +288,7 @@ class HomeScreen extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             gradient: LinearGradient(
@@ -266,25 +300,29 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 32, color: color),
-              const SizedBox(height: 8),
+              Icon(icon, size: isSmallScreen ? 28.0 : 32.0, color: color),
+              SizedBox(height: isSmallScreen ? 6.0 : 8.0),
               Text(
                 title,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: isSmallScreen ? 12.0 : 14.0,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: isSmallScreen ? 2.0 : 4.0),
               Text(
                 subtitle,
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: isSmallScreen ? 9.0 : 10.0,
                   color: AppColors.textSecondary,
                 ),
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -294,56 +332,65 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildRecentSlips(BuildContext context, LotteryViewModel viewModel) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Recent Slips (${viewModel.slips.length})',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
+    final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
+    final maxHeight = MediaQuery.of(context).size.height * 0.4;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Recent Slips (${viewModel.slips.length})',
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 14.0 : 16.0,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
                 ),
-                if (viewModel.slips.isNotEmpty)
-                  TextButton.icon(
-                    onPressed: () => _showClearConfirmationDialog(context, viewModel),
-                    icon: const Icon(Icons.clear_all, size: 16),
-                    label: const Text('Clear All'),
-                    style: TextButton.styleFrom(foregroundColor: AppColors.error),
-                  ),
-              ],
-            ),
+              ),
+              TextButton.icon(
+                onPressed: () => _showClearConfirmationDialog(context, viewModel),
+                icon: Icon(Icons.clear_all, size: isSmallScreen ? 14.0 : 16.0),
+                label: Text('Clear All', style: TextStyle(fontSize: isSmallScreen ? 12.0 : 14.0)),
+                style: TextButton.styleFrom(foregroundColor: AppColors.error),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: ListView.builder(
-                  itemCount: viewModel.slips.length,
-                  itemBuilder: (context, index) {
-                    final slip = viewModel.slips[index];
-                    return _buildSlipItem(context, slip, index + 1, viewModel);
-                  },
-                ),
+        ),
+        SizedBox(height: isSmallScreen ? 8.0 : 12.0),
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: maxHeight,
+            minHeight: 100,
+          ),
+          child: Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: ListView.builder(
+                shrinkWrap: true,
+                physics: const AlwaysScrollableScrollPhysics(),
+                itemCount: viewModel.slips.length,
+                itemBuilder: (context, index) {
+                  final slip = viewModel.slips[index];
+                  return _buildSlipItem(context, slip, index + 1, viewModel);
+                },
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildSlipItem(BuildContext context, LotterySlip slip, int number, LotteryViewModel viewModel) {
+    final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -353,8 +400,8 @@ class HomeScreen extends StatelessWidget {
       ),
       child: ListTile(
         leading: Container(
-          width: 36,
-          height: 36,
+          width: isSmallScreen ? 32.0 : 36.0,
+          height: isSmallScreen ? 32.0 : 36.0,
           decoration: const BoxDecoration(
             color: AppColors.primary,
             shape: BoxShape.circle,
@@ -362,9 +409,9 @@ class HomeScreen extends StatelessWidget {
           child: Center(
             child: Text(
               number.toString(),
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.white,
-                fontSize: 12,
+                fontSize: isSmallScreen ? 10.0 : 12.0,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -372,9 +419,9 @@ class HomeScreen extends StatelessWidget {
         ),
         title: Text(
           slip.formattedNumbers,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'monospace',
-            fontSize: 12,
+            fontSize: isSmallScreen ? 10.0 : 12.0,
             fontWeight: FontWeight.w500,
             color: AppColors.textPrimary,
           ),
@@ -382,12 +429,12 @@ class HomeScreen extends StatelessWidget {
         subtitle: Text(
           '${slip.type} • ${_formatTime(slip.createdAt)}',
           style: TextStyle(
-            fontSize: 10,
+            fontSize: isSmallScreen ? 8.0 : 10.0,
             color: AppColors.textSecondary,
           ),
         ),
         trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, size: 18),
+          icon: Icon(Icons.delete_outline, size: isSmallScreen ? 16.0 : 18.0),
           onPressed: () => _showDeleteConfirmationDialog(context, viewModel, slip.id),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12),
@@ -464,7 +511,7 @@ class HomeScreen extends StatelessWidget {
               viewModel.clearSlips();
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-               const SnackBar(
+                SnackBar(
                   content: const Text('All slips cleared successfully'),
                   backgroundColor: AppColors.success,
                   behavior: SnackBarBehavior.floating,

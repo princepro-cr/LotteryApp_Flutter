@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../view_models/lottery_view_model.dart';
+import '../theme/app_colors.dart';
+import '../utils/responsive_helper.dart';
 
 class SlipEntryScreen extends StatefulWidget {
   const SlipEntryScreen({super.key});
@@ -51,47 +53,54 @@ class _SlipEntryScreenState extends State<SlipEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Create Lottery Slip',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: isSmallScreen ? 18.0 : 20.0),
         ),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-        elevation: 4,
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.white,
+        elevation: 0,
       ),
-      body: Column(
-        children: [
-          // Progress Section
-          _buildProgressSection(context),
-          
-          // Selected Numbers Display
-          _buildNumbersDisplay(context),
-          
-          // Number Grid
-          _buildNumberGrid(context),
-          
-          // Action Buttons
-          _buildActionButtons(context),
-        ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Progress Section
+            _buildProgressSection(context),
+            
+            // Selected Numbers Display
+            _buildNumbersDisplay(context),
+            
+            // Number Grid
+            Expanded(
+              child: _buildNumberGridSection(context),
+            ),
+            
+            // Action Buttons
+            _buildActionButtons(context),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildProgressSection(BuildContext context) {
+    final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
+    
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isSmallScreen ? 16.0 : 20.0),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.deepPurple[400]!, Colors.deepPurple[600]!],
-        ),
+        gradient: AppColors.primaryGradient,
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Progress Bar
           LinearProgressIndicator(
@@ -99,25 +108,27 @@ class _SlipEntryScreenState extends State<SlipEntryScreen> {
             backgroundColor: Colors.white.withOpacity(0.3),
             color: Colors.amber,
             borderRadius: BorderRadius.circular(10),
-            minHeight: 8,
+            minHeight: isSmallScreen ? 6.0 : 8.0,
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: isSmallScreen ? 16.0 : 20.0),
           // Progress Text
           Text(
             'Select Number ${_currentIndex + 1} of 6',
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
-              fontSize: 20,
+              fontSize: isSmallScreen ? 18.0 : 20.0,
               fontWeight: FontWeight.bold,
             ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: isSmallScreen ? 4.0 : 8.0),
+          Text(
             'Choose unique numbers from 1 to 49',
             style: TextStyle(
               color: Colors.white70,
-              fontSize: 14,
+              fontSize: isSmallScreen ? 12.0 : 14.0,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -125,52 +136,49 @@ class _SlipEntryScreenState extends State<SlipEntryScreen> {
   }
 
   Widget _buildNumbersDisplay(BuildContext context) {
+    final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
+    
     return Container(
-      margin: const EdgeInsets.all(20),
-      padding: const EdgeInsets.all(20),
+      margin: EdgeInsets.all(isSmallScreen ? 12.0 : 20.0),
+      padding: EdgeInsets.all(isSmallScreen ? 16.0 : 20.0),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: [AppColors.cardShadow],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
+          Text(
             'Your Selected Numbers',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: isSmallScreen ? 14.0 : 16.0,
               fontWeight: FontWeight.bold,
-              color: Colors.deepPurple,
+              color: AppColors.primary,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: isSmallScreen ? 12.0 : 16.0),
           Wrap(
-            spacing: 12,
-            runSpacing: 12,
+            spacing: isSmallScreen ? 8.0 : 12.0,
+            runSpacing: isSmallScreen ? 8.0 : 12.0,
             children: List.generate(6, (index) {
               final isCurrent = index == _currentIndex;
               final number = _selectedNumbers[index];
               
               return Container(
-                width: 50,
-                height: 50,
+                width: isSmallScreen ? 40.0 : 50.0,
+                height: isSmallScreen ? 40.0 : 50.0,
                 decoration: BoxDecoration(
                   color: isCurrent ? Colors.amber : 
-                         number != null ? Colors.deepPurple : Colors.grey[200],
+                         number != null ? AppColors.primary : Colors.grey[200],
                   shape: BoxShape.circle,
-                  border: isCurrent ? Border.all(color: Colors.orange, width: 3) : null,
+                  border: isCurrent ? Border.all(color: Colors.orange, width: 2) : null,
                 ),
                 child: Center(
                   child: Text(
                     number?.toString() ?? '?',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: isSmallScreen ? 14.0 : 18.0,
                       fontWeight: FontWeight.bold,
                       color: number != null ? Colors.white : Colors.grey[600],
                     ),
@@ -184,101 +192,113 @@ class _SlipEntryScreenState extends State<SlipEntryScreen> {
     );
   }
 
-  Widget _buildNumberGrid(BuildContext context) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          children: [
-            // Quick Actions
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.backspace, size: 16),
-                    label: const Text('Remove Last'),
-                    onPressed: _currentIndex > 0 ? _removeLastNumber : null,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.clear, size: 16),
-                    label: const Text('Clear All'),
-                    onPressed: _currentIndex > 0 ? _clearSelection : null,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.orange,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Number Grid
-            Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  crossAxisSpacing: 6,
-                  mainAxisSpacing: 6,
-                  childAspectRatio: 1.0,
-                ),
-                itemCount: 49,
-                itemBuilder: (context, index) {
-                  final number = index + 1;
-                  final isSelected = _isNumberSelected(number);
-                  
-                  return Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => _selectNumber(number),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isSelected ? Colors.deepPurple : Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: isSelected ? Colors.deepPurple : Colors.grey[300]!,
-                            width: isSelected ? 2 : 1,
-                          ),
-                          boxShadow: isSelected ? [
-                            BoxShadow(
-                              color: Colors.deepPurple.withOpacity(0.3),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ] : null,
-                        ),
-                        child: Center(
-                          child: Text(
-                            number.toString(),
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected ? Colors.white : Colors.deepPurple,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+  Widget _buildNumberGridSection(BuildContext context) {
+    final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
+    
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12.0 : 16.0),
+      child: Column(
+        children: [
+          // Quick Actions
+          _buildQuickActions(context),
+          
+          SizedBox(height: isSmallScreen ? 12.0 : 16.0),
+          
+          // Number Grid
+          Expanded(
+            child: _buildNumberGrid(context),
+          ),
+        ],
       ),
     );
   }
 
+  Widget _buildQuickActions(BuildContext context) {
+    final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
+    
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            icon: Icon(Icons.backspace, size: isSmallScreen ? 14.0 : 16.0),
+            label: Text('Remove Last', style: TextStyle(fontSize: isSmallScreen ? 12.0 : 14.0)),
+            onPressed: _currentIndex > 0 ? _removeLastNumber : null,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.error,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ),
+        SizedBox(width: isSmallScreen ? 8.0 : 12.0),
+        Expanded(
+          child: OutlinedButton.icon(
+            icon: Icon(Icons.clear, size: isSmallScreen ? 14.0 : 16.0),
+            label: Text('Clear All', style: TextStyle(fontSize: isSmallScreen ? 12.0 : 14.0)),
+            onPressed: _currentIndex > 0 ? _clearSelection : null,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.warning,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNumberGrid(BuildContext context) {
+    final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
+    final crossAxisCount = isSmallScreen ? 7 : 8;
+    final childAspectRatio = isSmallScreen ? 1.0 : 1.1;
+
+    return GridView.builder(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: isSmallScreen ? 4.0 : 6.0,
+        mainAxisSpacing: isSmallScreen ? 4.0 : 6.0,
+        childAspectRatio: childAspectRatio,
+      ),
+      itemCount: 49,
+      itemBuilder: (context, index) {
+        final number = index + 1;
+        final isSelected = _isNumberSelected(number);
+        
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => _selectNumber(number),
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary : Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isSelected ? AppColors.primary : Colors.grey[300]!,
+                  width: isSelected ? 2 : 1,
+                ),
+                boxShadow: isSelected ? [AppColors.buttonShadow] : null,
+              ),
+              child: Center(
+                child: Text(
+                  number.toString(),
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 14.0 : 16.0,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? Colors.white : AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildActionButtons(BuildContext context) {
+    final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
+    
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isSmallScreen ? 16.0 : 20.0),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: Colors.grey[200]!)),
@@ -289,15 +309,15 @@ class _SlipEntryScreenState extends State<SlipEntryScreen> {
             child: OutlinedButton(
               onPressed: () => Navigator.pop(context),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                foregroundColor: Colors.deepPurple,
+                padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 12.0 : 16.0),
+                foregroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                side: BorderSide(color: Colors.deepPurple.withOpacity(0.5)),
+                side: BorderSide(color: AppColors.primary.withOpacity(0.5)),
               ),
-              child: const Text('Cancel'),
+              child: Text('Cancel', style: TextStyle(fontSize: isSmallScreen ? 14.0 : 16.0)),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: isSmallScreen ? 12.0 : 16.0),
           Expanded(
             child: ElevatedButton(
               onPressed: _canSubmit()
@@ -309,7 +329,7 @@ class _SlipEntryScreenState extends State<SlipEntryScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: const Text('Lottery slip added successfully!'),
-                            backgroundColor: Colors.green,
+                            backgroundColor: AppColors.success,
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
@@ -318,7 +338,7 @@ class _SlipEntryScreenState extends State<SlipEntryScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Error: $e'),
-                            backgroundColor: Colors.red,
+                            backgroundColor: AppColors.error,
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
@@ -326,20 +346,23 @@ class _SlipEntryScreenState extends State<SlipEntryScreen> {
                     }
                   : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _canSubmit() ? Colors.green : Colors.grey[400],
+                backgroundColor: _canSubmit() ? AppColors.success : Colors.grey[400],
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 12.0 : 16.0),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 2,
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle, size: 20),
-                  SizedBox(width: 8),
+                  Icon(Icons.check_circle, size: isSmallScreen ? 18.0 : 20.0),
+                  SizedBox(width: isSmallScreen ? 6.0 : 8.0),
                   Text(
                     'Submit Slip',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: isSmallScreen ? 14.0 : 16.0,
+                    ),
                   ),
                 ],
               ),
