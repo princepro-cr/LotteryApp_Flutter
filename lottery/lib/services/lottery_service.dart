@@ -6,6 +6,14 @@ class LotteryService {
   static const int minNumber = 1;
   static const int maxNumber = 49;
   static const int numbersPerSlip = 6;
+  
+  // Prize structure
+  static const Map<int, double> prizeAmounts = {
+    6: 500000.0, // First prize
+    5: 5000.0,   // Second prize
+    4: 500.0,    // Third prize
+    3: 50.0,     // Fourth prize
+  };
 
   // Generate random numbers for a slip
   List<int> generateRandomNumbers() {
@@ -17,6 +25,11 @@ class LotteryService {
     }
     
     return numbers.toList()..sort();
+  }
+
+  // Generate quick pick numbers (multiple slips at once)
+  List<List<int>> generateQuickPicks(int count) {
+    return List.generate(count, (_) => generateRandomNumbers());
   }
 
   // Validate if numbers are within range and unique
@@ -42,15 +55,25 @@ class LotteryService {
   LotteryDraw performDraw(List<LotterySlip> slips) {
     final winningNumbers = generateWinningNumbers();
     final results = <LotteryResult>[];
+    double totalPrizes = 0;
 
     for (final slip in slips) {
       final matchedNumbers = _countMatches(slip.numbers, winningNumbers);
-      final prize = _determinePrize(matchedNumbers);
+      final prizeInfo = _determinePrize(matchedNumbers);
+      final prizeAmount = prizeInfo['amount'] as double;
+      final prizeName = prizeInfo['name'] as String;
+      final isWinner = prizeAmount > 0;
+      
+      if (isWinner) {
+        totalPrizes += prizeAmount;
+      }
       
       results.add(LotteryResult(
         slip: slip,
         matchedNumbers: matchedNumbers,
-        prize: prize,
+        prize: prizeName,
+        prizeAmount: prizeAmount,
+        isWinner: isWinner,
       ));
     }
 
@@ -58,6 +81,8 @@ class LotteryService {
       winningNumbers: winningNumbers,
       results: results,
       drawnAt: DateTime.now(),
+      drawId: DateTime.now().millisecondsSinceEpoch.toString(),
+      totalPrizes: totalPrizes,
     );
   }
 
@@ -65,18 +90,51 @@ class LotteryService {
     return slipNumbers.where((number) => winningNumbers.contains(number)).length;
   }
 
-  String _determinePrize(int matchedNumbers) {
+  Map<String, dynamic> _determinePrize(int matchedNumbers) {
+    final amount = prizeAmounts[matchedNumbers] ?? 0.0;
+    String name;
+    
     switch (matchedNumbers) {
       case 6:
-        return 'First Prize!';
+        name = 'Jackpot!';
+        break;
       case 5:
-        return 'Second Prize';
+        name = 'Second Prize';
+        break;
       case 4:
-        return 'Third Prize';
+        name = 'Third Prize';
+        break;
       case 3:
-        return 'Fourth Prize';
+        name = 'Fourth Prize';
+        break;
       default:
-        return 'No Prize';
+        name = 'No Prize';
     }
+    
+    return {'name': name, 'amount': amount};
+  }
+
+  // Calculate statistics
+  LotteryStats calculateStats(List<LotterySlip> slips, List<LotteryDraw> draws) {
+    double totalSpent = slips.length * 12; // $2 per slip
+    double totalWon = 0;
+    int bestMatch = 0;
+    
+    for (final draw in draws) {
+      totalWon += draw.totalPrizes;
+      for (final result in draw.results) {
+        if (result.matchedNumbers > bestMatch) {
+          bestMatch = result.matchedNumbers;
+        }
+      }
+    }
+    
+    return LotteryStats(
+      totalSlips: slips.length,
+      totalDraws: draws.length,
+      totalSpent: totalSpent,
+      totalWon: totalWon,
+      bestMatch: bestMatch,
+    );
   }
 }
