@@ -15,22 +15,49 @@ class ResultsScreen extends StatelessWidget {
 
     if (draw == null) {
       return Scaffold(
+        backgroundColor: AppColors.background,
         appBar: AppBar(
           title: const Text('Draw Results'),
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.white,
+          elevation: 0,
         ),
-        body: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.grey),
-              SizedBox(height: 16),
-              Text(
-                'No draw results available',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-              ),
-            ],
+        body: Center(
+          child: Padding(
+            padding: ResponsiveHelper.getPadding(context),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.emoji_events_outlined, size: 80, color: AppColors.textDisabled),
+                SizedBox(height: 20),
+                Text(
+                  'No Draw Results',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Perform a draw to see results here',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                  ),
+                  child: const Text('Back to Home'),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -39,7 +66,7 @@ class ResultsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Draw Results',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -68,27 +95,44 @@ class ResultsScreen extends StatelessWidget {
 
   Widget _buildWinningNumbersSection(BuildContext context, LotteryDraw draw) {
     final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
+    final totalWon = draw.results.fold<double>(0, (sum, result) {
+      final prize = _getPrizeAmount(result.prize);
+      return sum + prize;
+    });
     
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(isSmallScreen ? 16.0 : 24.0),
+      padding: EdgeInsets.all(isSmallScreen ? 20.0 : 24.0),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.success, Colors.green[700]!],
+          colors: [AppColors.success, Color(0xFF2E7D32)],
         ),
-        boxShadow: [AppColors.cardShadow],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.success.withOpacity(0.4),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.emoji_events,
-            size: isSmallScreen ? 32.0 : 40.0,
-            color: AppColors.white,
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.emoji_events,
+              size: isSmallScreen ? 28.0 : 32.0,
+              color: AppColors.white,
+            ),
           ),
-          SizedBox(height: isSmallScreen ? 8.0 : 12.0),
+          SizedBox(height: isSmallScreen ? 12.0 : 16.0),
           Text(
             'Winning Numbers',
             style: TextStyle(
@@ -99,20 +143,27 @@ class ResultsScreen extends StatelessWidget {
           ),
           SizedBox(height: isSmallScreen ? 12.0 : 16.0),
           Wrap(
-            spacing: isSmallScreen ? 8.0 : 12.0,
+            spacing: isSmallScreen ? 10.0 : 12.0,
             children: draw.winningNumbers.map((number) {
               return Container(
-                width: isSmallScreen ? 40.0 : 50.0,
-                height: isSmallScreen ? 40.0 : 50.0,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
+                width: isSmallScreen ? 44.0 : 52.0,
+                height: isSmallScreen ? 44.0 : 52.0,
+                decoration: BoxDecoration(
+                  color: AppColors.white,
                   shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Center(
                   child: Text(
                     number.toString().padLeft(2, '0'),
                     style: TextStyle(
-                      fontSize: isSmallScreen ? 14.0 : 18.0,
+                      fontSize: isSmallScreen ? 16.0 : 18.0,
                       fontWeight: FontWeight.bold,
                       color: AppColors.success,
                     ),
@@ -121,11 +172,34 @@ class ResultsScreen extends StatelessWidget {
               );
             }).toList(),
           ),
+          SizedBox(height: isSmallScreen ? 12.0 : 16.0),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.celebration, size: 16, color: AppColors.white),
+                SizedBox(width: 8),
+                Text(
+                  'Total Won: R${totalWon.toStringAsFixed(0)}',
+                  style: TextStyle(
+                    color: AppColors.white,
+                    fontSize: isSmallScreen ? 14.0 : 16.0,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
           SizedBox(height: isSmallScreen ? 8.0 : 12.0),
           Text(
             'Drawn: ${_formatDateTime(draw.drawnAt)}',
             style: TextStyle(
-              color: Colors.white70,
+              color: AppColors.white.withOpacity(0.8),
               fontSize: isSmallScreen ? 12.0 : 14.0,
             ),
           ),
@@ -138,25 +212,32 @@ class ResultsScreen extends StatelessWidget {
     final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
     
     return Padding(
-      padding: EdgeInsets.all(isSmallScreen ? 12.0 : 20.0),
+      padding: EdgeInsets.all(isSmallScreen ? 16.0 : 20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.assignment, color: AppColors.primary, size: isSmallScreen ? 18.0 : 20.0),
-              SizedBox(width: isSmallScreen ? 6.0 : 8.0),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.assignment, color: AppColors.primary, size: isSmallScreen ? 18.0 : 20.0),
+              ),
+              SizedBox(width: isSmallScreen ? 8.0 : 12.0),
               Text(
                 'Your Results (${draw.results.length} slips)',
                 style: TextStyle(
-                  fontSize: isSmallScreen ? 16.0 : 18.0,
+                  fontSize: isSmallScreen ? 18.0 : 20.0,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
               ),
             ],
           ),
-          SizedBox(height: isSmallScreen ? 12.0 : 16.0),
+          SizedBox(height: isSmallScreen ? 16.0 : 20.0),
           Expanded(
             child: ListView.builder(
               shrinkWrap: true,
@@ -175,35 +256,55 @@ class ResultsScreen extends StatelessWidget {
 
   Widget _buildResultCard(BuildContext context, LotteryResult result, int slipNumber) {
     final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
+    final prizeAmount = _getPrizeAmount(result.prize);
     
     return Card(
-      elevation: 2,
-      margin: EdgeInsets.only(bottom: isSmallScreen ? 8.0 : 12.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 3,
+      margin: EdgeInsets.only(bottom: isSmallScreen ? 12.0 : 16.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
+        padding: EdgeInsets.all(isSmallScreen ? 16.0 : 20.0),
         child: Row(
           children: [
             // Match Count Badge
             Container(
-              width: isSmallScreen ? 40.0 : 50.0,
-              height: isSmallScreen ? 40.0 : 50.0,
+              width: isSmallScreen ? 50.0 : 60.0,
+              height: isSmallScreen ? 50.0 : 60.0,
               decoration: BoxDecoration(
-                color: _getPrizeColor(result.prize),
+                gradient: _getPrizeGradient(result.prize),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: _getPrizeColor(result.prize).withOpacity(0.4),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
               child: Center(
-                child: Text(
-                  result.matchedNumbers.toString(),
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: isSmallScreen ? 14.0 : 18.0,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      result.matchedNumbers.toString(),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: isSmallScreen ? 18.0 : 20.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'match',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: isSmallScreen ? 9.0 : 10.0,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            SizedBox(width: isSmallScreen ? 12.0 : 16.0),
+            SizedBox(width: isSmallScreen ? 16.0 : 20.0),
             // Slip Details
             Expanded(
               child: Column(
@@ -214,24 +315,33 @@ class ResultsScreen extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
-                      fontSize: isSmallScreen ? 12.0 : 14.0,
+                      fontSize: isSmallScreen ? 14.0 : 16.0,
                     ),
                   ),
-                  SizedBox(height: isSmallScreen ? 2.0 : 4.0),
+                  SizedBox(height: isSmallScreen ? 4.0 : 6.0),
                   Text(
                     result.slip.numbers.map((n) => n.toString().padLeft(2, '0')).join(' - '),
                     style: TextStyle(
                       fontFamily: 'monospace',
-                      fontSize: isSmallScreen ? 10.0 : 12.0,
+                      fontSize: isSmallScreen ? 12.0 : 14.0,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  SizedBox(height: isSmallScreen ? 2.0 : 4.0),
-                  Text(
-                    '${result.matchedNumbers} numbers matched',
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 10.0 : 12.0,
-                      color: AppColors.textSecondary,
-                    ),
+                  SizedBox(height: isSmallScreen ? 4.0 : 6.0),
+                  Row(
+                    children: [
+                      Icon(Icons.emoji_events, size: 14, color: _getPrizeColor(result.prize)),
+                      SizedBox(width: 4),
+                      Text(
+                        'R${prizeAmount.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 12.0 : 14.0,
+                          fontWeight: FontWeight.bold,
+                          color: _getPrizeColor(result.prize),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -239,8 +349,8 @@ class ResultsScreen extends StatelessWidget {
             // Prize Badge
             Container(
               padding: EdgeInsets.symmetric(
-                horizontal: isSmallScreen ? 8.0 : 12.0, 
-                vertical: isSmallScreen ? 4.0 : 6.0
+                horizontal: isSmallScreen ? 12.0 : 16.0, 
+                vertical: isSmallScreen ? 6.0 : 8.0
               ),
               decoration: BoxDecoration(
                 color: _getPrizeColor(result.prize).withOpacity(0.1),
@@ -250,7 +360,7 @@ class ResultsScreen extends StatelessWidget {
               child: Text(
                 result.prize,
                 style: TextStyle(
-                  fontSize: isSmallScreen ? 10.0 : 12.0,
+                  fontSize: isSmallScreen ? 11.0 : 12.0,
                   fontWeight: FontWeight.bold,
                   color: _getPrizeColor(result.prize),
                 ),
@@ -266,28 +376,29 @@ class ResultsScreen extends StatelessWidget {
     final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
     
     return Container(
-      padding: EdgeInsets.all(isSmallScreen ? 16.0 : 20.0),
+      padding: EdgeInsets.all(isSmallScreen ? 20.0 : 24.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         border: Border(top: BorderSide(color: Colors.grey[200]!)),
       ),
       child: SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(
           onPressed: () => Navigator.pop(context),
-          icon: Icon(Icons.home, size: isSmallScreen ? 18.0 : 20.0),
+          icon: Icon(Icons.home, size: isSmallScreen ? 20.0 : 22.0),
           label: Text(
             'Back to Home',
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: isSmallScreen ? 14.0 : 16.0,
+              fontSize: isSmallScreen ? 16.0 : 18.0,
             ),
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: AppColors.white,
-            padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 12.0 : 16.0),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 16.0 : 18.0),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            elevation: 4,
           ),
         ),
       ),
@@ -310,6 +421,30 @@ class ResultsScreen extends StatelessWidget {
         return AppColors.primary;
       default:
         return Colors.grey;
+    }
+  }
+
+  Gradient _getPrizeGradient(String prize) {
+    final color = _getPrizeColor(prize);
+    return LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [color, Color.alphaBlend(color.withOpacity(0.7), color)],
+    );
+  }
+
+  double _getPrizeAmount(String prize) {
+    switch (prize) {
+      case 'Jackpot!':
+        return 10000;
+      case 'Second Prize':
+        return 5000;
+      case 'Third Prize':
+        return 1000;
+      case 'Fourth Prize':
+        return 100;
+      default:
+        return 0;
     }
   }
 }

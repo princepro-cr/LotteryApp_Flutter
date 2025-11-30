@@ -19,7 +19,7 @@ class LotteryViewModel with ChangeNotifier {
   
   LotteryStats get stats => _lotteryService.calculateStats(_slips, _drawHistory);
   
-  double get totalCost => _slips.length * 2.0;
+  double get totalCost => _slips.length * 12;
 
   // Add a new slip
   void addSlip(List<int> numbers, {String type = 'manual', bool isQuickPick = false}) {
