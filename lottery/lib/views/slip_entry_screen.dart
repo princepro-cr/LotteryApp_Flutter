@@ -9,41 +9,17 @@ class SlipEntryScreen extends StatefulWidget {
   State<SlipEntryScreen> createState() => _SlipEntryScreenState();
 }
 
-class _SlipEntryScreenState extends State<SlipEntryScreen> with SingleTickerProviderStateMixin {
+class _SlipEntryScreenState extends State<SlipEntryScreen> {
   final List<int?> _selectedNumbers = List.filled(6, null);
   int _currentIndex = 0;
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
 
   void _selectNumber(int number) {
-    if (_isNumberSelected(number)) {
-      return; // Prevent selecting same number twice
-    }
-    
-    _pulseController.forward().then((_) => _pulseController.reverse());
-    
     setState(() {
-      _selectedNumbers[_currentIndex] = number;
-      if (_currentIndex < 5) {
-        _currentIndex++;
+      if (!_selectedNumbers.contains(number)) {
+        _selectedNumbers[_currentIndex] = number;
+        if (_currentIndex < 5) {
+          _currentIndex++;
+        }
       }
     });
   }
@@ -52,6 +28,15 @@ class _SlipEntryScreenState extends State<SlipEntryScreen> with SingleTickerProv
     setState(() {
       _selectedNumbers.fillRange(0, 6, null);
       _currentIndex = 0;
+    });
+  }
+
+  void _removeLastNumber() {
+    setState(() {
+      if (_currentIndex > 0) {
+        _currentIndex--;
+        _selectedNumbers[_currentIndex] = null;
+      }
     });
   }
 
@@ -66,298 +51,301 @@ class _SlipEntryScreenState extends State<SlipEntryScreen> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
-    final progress = _selectedNumbers.where((n) => n != null).length / 6;
-
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Add Lottery Slip', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Create Lottery Slip',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
-        elevation: 0,
+        elevation: 4,
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.deepPurple, Colors.deepPurple.shade50],
-            stops: const [0.0, 0.2],
-          ),
+      body: Column(
+        children: [
+          // Progress Section
+          _buildProgressSection(context),
+          
+          // Selected Numbers Display
+          _buildNumbersDisplay(context),
+          
+          // Number Grid
+          _buildNumberGrid(context),
+          
+          // Action Buttons
+          _buildActionButtons(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressSection(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Colors.deepPurple[400]!, Colors.deepPurple[600]!],
         ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Progress Section
-              Container(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Select Your Numbers',
-                          style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+      ),
+      child: Column(
+        children: [
+          // Progress Bar
+          LinearProgressIndicator(
+            value: _currentIndex / 6,
+            backgroundColor: Colors.white.withOpacity(0.3),
+            color: Colors.amber,
+            borderRadius: BorderRadius.circular(10),
+            minHeight: 8,
+          ),
+          const SizedBox(height: 20),
+          // Progress Text
+          Text(
+            'Select Number ${_currentIndex + 1} of 6',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Choose unique numbers from 1 to 49',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNumbersDisplay(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const Text(
+            'Your Selected Numbers',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.deepPurple,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: List.generate(6, (index) {
+              final isCurrent = index == _currentIndex;
+              final number = _selectedNumbers[index];
+              
+              return Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: isCurrent ? Colors.amber : 
+                         number != null ? Colors.deepPurple : Colors.grey[200],
+                  shape: BoxShape.circle,
+                  border: isCurrent ? Border.all(color: Colors.orange, width: 3) : null,
+                ),
+                child: Center(
+                  child: Text(
+                    number?.toString() ?? '?',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: number != null ? Colors.white : Colors.grey[600],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNumberGrid(BuildContext context) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          children: [
+            // Quick Actions
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.backspace, size: 16),
+                    label: const Text('Remove Last'),
+                    onPressed: _currentIndex > 0 ? _removeLastNumber : null,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.clear, size: 16),
+                    label: const Text('Clear All'),
+                    onPressed: _currentIndex > 0 ? _clearSelection : null,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.orange,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Number Grid
+            Expanded(
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  crossAxisSpacing: 6,
+                  mainAxisSpacing: 6,
+                  childAspectRatio: 1.0,
+                ),
+                itemCount: 49,
+                itemBuilder: (context, index) {
+                  final number = index + 1;
+                  final isSelected = _isNumberSelected(number);
+                  
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _selectNumber(number),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.deepPurple : Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected ? Colors.deepPurple : Colors.grey[300]!,
+                            width: isSelected ? 2 : 1,
                           ),
+                          boxShadow: isSelected ? [
+                            BoxShadow(
+                              color: Colors.deepPurple.withOpacity(0.3),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ] : null,
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
+                        child: Center(
                           child: Text(
-                            '${_selectedNumbers.where((n) => n != null).length}/6',
-                            style: const TextStyle(
-                              color: Colors.deepPurple,
+                            number.toString(),
+                            style: TextStyle(
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              color: isSelected ? Colors.white : Colors.deepPurple,
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 8,
-                        backgroundColor: Colors.deepPurple.shade200,
-                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
-              
-              // Selected numbers display
-              Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                elevation: 8,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: List.generate(6, (index) {
-                      final isActive = index == _currentIndex && _selectedNumbers[index] == null;
-                      final hasNumber = _selectedNumbers[index] != null;
-                      
-                      return ScaleTransition(
-                        scale: (isActive && hasNumber == false) ? _pulseAnimation : const AlwaysStoppedAnimation(1.0),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            gradient: hasNumber
-                                ? LinearGradient(
-                                    colors: [Colors.deepPurple, Colors.purple.shade300],
-                                  )
-                                : null,
-                            color: hasNumber
-                                ? null
-                                : isActive
-                                    ? Colors.deepPurple.shade100
-                                    : Colors.grey.shade200,
-                            shape: BoxShape.circle,
-                            border: isActive
-                                ? Border.all(color: Colors.deepPurple, width: 2)
-                                : null,
-                            boxShadow: hasNumber
-                                ? [
-                                    BoxShadow(
-                                      color: Colors.deepPurple.withOpacity(0.3),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                          child: Center(
-                            child: Text(
-                              _selectedNumbers[index]?.toString() ?? '',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                color: hasNumber ? Colors.white : Colors.grey.shade500,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Colors.grey[200]!)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                foregroundColor: Colors.deepPurple,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                side: BorderSide(color: Colors.deepPurple.withOpacity(0.5)),
               ),
-              
-              const SizedBox(height: 20),
-              
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  'Choose numbers from 1 to 49',
-                  style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Number grid
-              Expanded(
-                child: Card(
-                  margin: const EdgeInsets.all(16),
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: GridView.builder(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 7,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
-                      ),
-                      itemCount: 49,
-                      itemBuilder: (context, index) {
-                        final number = index + 1;
-                        final isSelected = _isNumberSelected(number);
-                        
-                        return Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => _selectNumber(number),
-                            borderRadius: BorderRadius.circular(12),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              decoration: BoxDecoration(
-                                gradient: isSelected
-                                    ? LinearGradient(
-                                        colors: [Colors.deepPurple, Colors.purple.shade400],
-                                      )
-                                    : null,
-                                color: isSelected ? null : Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? Colors.deepPurple.shade700
-                                      : Colors.grey.shade300,
-                                  width: isSelected ? 2 : 1,
-                                ),
-                                boxShadow: isSelected
-                                    ? [
-                                        BoxShadow(
-                                          color: Colors.deepPurple.withOpacity(0.4),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ]
-                                    : null,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  number.toString(),
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    color: isSelected ? Colors.white : Colors.grey.shade700,
-                                  ),
-                                ),
-                              ),
-                            ),
+              child: const Text('Cancel'),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: _canSubmit()
+                  ? () {
+                      try {
+                        final viewModel = context.read<LotteryViewModel>();
+                        viewModel.addSlip(_selectedNumbers.cast<int>());
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Lottery slip added successfully!'),
+                            backgroundColor: Colors.green,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                         );
-                      },
-                    ),
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error: $e'),
+                            backgroundColor: Colors.red,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    }
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _canSubmit() ? Colors.green : Colors.grey[400],
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 2,
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Submit Slip',
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                ),
+                ],
               ),
-              
-              // Action buttons
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _clearSelection,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Clear'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.deepPurple,
-                          side: const BorderSide(color: Colors.deepPurple, width: 2),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton.icon(
-                        onPressed: _canSubmit()
-                            ? () {
-                                try {
-                                  final viewModel = context.read<LotteryViewModel>();
-                                  viewModel.addSlip(_selectedNumbers.cast<int>());
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: const Row(
-                                        children: [
-                                          Icon(Icons.check_circle, color: Colors.white),
-                                          SizedBox(width: 12),
-                                          Text('Slip added successfully!'),
-                                        ],
-                                      ),
-                                      backgroundColor: Colors.green,
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                  );
-                                } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Error: $e')),
-                                  );
-                                }
-                              }
-                            : null,
-                        icon: const Icon(Icons.check_circle),
-                        label: const Text(
-                          'Submit Slip',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
