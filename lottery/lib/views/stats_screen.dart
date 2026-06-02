@@ -1,422 +1,197 @@
 import 'package:flutter/material.dart';
-import 'package:lucky_dip/models/lottery_draw.dart';
 import 'package:provider/provider.dart';
-import '../view_models/lottery_view_model.dart';
-import '../theme/app_colors.dart';
+import '../viewmodels/stats_viewmodel.dart';
+import '../core/app_colors.dart';
 
 class StatsScreen extends StatelessWidget {
   const StatsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.watch<LotteryViewModel>();
-    final stats = viewModel.stats;
+    return Consumer<StatsViewModel>(
+      builder: (context, vm, child) {
+        if (vm.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text(
-          'Statistics & History',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.white,
-        elevation: 0,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: ListView(
-          children: [
-            // Overview Card
-            _buildOverviewCard(context, stats),
-            
-            const SizedBox(height: 20),
-            
-            // Number Frequency
-            if (viewModel.slips.isNotEmpty) 
-              _buildNumberFrequency(context, viewModel),
-            
-            const SizedBox(height: 20),
-            
-            // Draw History
-            if (viewModel.drawHistory.isNotEmpty)
-              _buildDrawHistory(context, viewModel),
-            
-            const SizedBox(height: 20),
-            
-            // Empty State for no data
-            if (viewModel.slips.isEmpty && viewModel.drawHistory.isEmpty)
-              _buildEmptyState(context),
-          ],
-        ),
-      ),
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Your Stats', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              _buildStatsCards(vm),
+              const SizedBox(height: 24),
+              const Text('Hot Numbers (Global)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              _buildHotNumbersChart(vm),
+              const SizedBox(height: 24),
+              const Text('Your Favourite Picks', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              _buildFavoriteNumbersChart(vm),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildOverviewCard(BuildContext context, LotteryStats stats) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            const Row(
+  Widget _buildStatsCards(StatsViewModel vm) {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.emeraldBorder),
+            ),
+            child: Column(
               children: [
-                Icon(Icons.analytics, color: AppColors.primary),
-                SizedBox(width: 8),
-                Text(
-                  'Overview',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
+                Text(vm.userStats['drawsPlayed']?.toString() ?? '0', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppColors.emerald)),
+                const SizedBox(height: 2),
+                const Text('Draws Played', style: TextStyle(fontSize: 11, color: AppColors.textSub)),
               ],
-            ),
-            const SizedBox(height: 20),
-            GridView(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.5,
-              ),
-              children: [
-                _buildStatCard(
-                  'Total Slips',
-                  stats.totalSlips.toString(),
-                  Icons.confirmation_number,
-                  AppColors.primary,
-                ),
-                _buildStatCard(
-                  'Total Draws',
-                  stats.totalDraws.toString(),
-                  Icons.celebration,
-                  AppColors.info,
-                ),
-                _buildStatCard(
-                  'Total Spent',
-                  '\R${stats.totalSpent.toStringAsFixed(0)}',
-                  Icons.attach_money,
-                  AppColors.warning,
-                ),
-                _buildStatCard(
-                  'Total Won',
-                  '\R${stats.totalWon.toStringAsFixed(0)}',
-                  Icons.emoji_events,
-                  AppColors.success,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: stats.netProfit >= 0 ? AppColors.success.withOpacity(0.1) : AppColors.error.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: stats.netProfit >= 0 ? AppColors.success.withOpacity(0.3) : AppColors.error.withOpacity(0.3),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        stats.netProfit >= 0 ? 'Net Profit' : 'Net Loss',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      Text(
-                        '\R ${stats.netProfit.abs().toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: stats.netProfit >= 0 ? AppColors.success : AppColors.error,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Icon(
-                    stats.netProfit >= 0 ? Icons.trending_up : Icons.trending_down,
-                    color: stats.netProfit >= 0 ? AppColors.success : AppColors.error,
-                    size: 32,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primaryExtraLight),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 24, color: color),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
             ),
           ),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 10,
-              color: AppColors.textSecondary,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.emeraldBorder),
             ),
+            child: Column(
+              children: [
+                Text(vm.userStats['wins']?.toString() ?? '0', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppColors.emerald)),
+                const SizedBox(height: 2),
+                const Text('Wins', style: TextStyle(fontSize: 11, color: AppColors.textSub)),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHotNumbersChart(StatsViewModel vm) {
+    final data = vm.getTopHotNumbers();
+    
+    if (data.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.emeraldBorder),
+        ),
+        child: const Center(child: Text('No draw data yet', style: TextStyle(fontSize: 12, color: AppColors.textSub))),
+      );
+    }
+
+    final maxValue = data.map((e) => e.value).reduce((a, b) => a > b ? a : b);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.emeraldBorder),
+      ),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 100,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: data.map((entry) {
+                final height = (entry.value / maxValue) * 80;
+                return Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(entry.value.toString(), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.emerald)),
+                      const SizedBox(height: 2),
+                      Container(height: height, decoration: const BoxDecoration(color: AppColors.emeraldBorder, borderRadius: BorderRadius.vertical(top: Radius.circular(4)))),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: data.map((entry) {
+              return Expanded(
+                child: Text(entry.key.toString(), textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textSub)),
+              );
+            }).toList(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildNumberFrequency(BuildContext context, LotteryViewModel viewModel) {
-    final frequency = viewModel.getNumberFrequency();
-    final sortedNumbers = frequency.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+  Widget _buildFavoriteNumbersChart(StatsViewModel vm) {
+    final data = vm.getTopFavoriteNumbers();
     
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.sort, color: AppColors.primary),
-                SizedBox(width: 8),
-                Text(
-                  'Most Frequent Numbers',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: sortedNumbers.take(10).map((entry) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+    if (data.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.emeraldBorder),
+        ),
+        child: const Center(child: Text('Place bets to see your picks', style: TextStyle(fontSize: 12, color: AppColors.textSub))),
+      );
+    }
+
+    final maxValue = data.map((e) => e.value).reduce((a, b) => a > b ? a : b);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.emeraldBorder),
+      ),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 100,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: data.map((entry) {
+                final height = (entry.value / maxValue) * 80;
+                return Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Text(
-                        entry.key.toString().padLeft(2, '0'),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '(${entry.value})',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
+                      Text(entry.value.toString(), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.emerald)),
+                      const SizedBox(height: 2),
+                      Container(height: height, decoration: const BoxDecoration(color: AppColors.emeraldBorder, borderRadius: BorderRadius.vertical(top: Radius.circular(4)))),
                     ],
                   ),
                 );
               }).toList(),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawHistory(BuildContext context, LotteryViewModel viewModel) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.history, color: AppColors.primary),
-                SizedBox(width: 8),
-                Text(
-                  'Recent Draws',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ...viewModel.drawHistory.reversed.take(5).map((draw) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.primaryExtraLight),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Draw #${draw.drawId.substring(draw.drawId.length - 4)}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          _formatDate(draw.drawnAt),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: draw.winningNumbers.map((number) {
-                        return Container(
-                          width: 30,
-                          height: 30,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              number.toString(),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.white,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(Icons.emoji_events, size: 16, color: AppColors.warning),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Prizes: \R${draw.totalPrizes.toStringAsFixed(0)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '${draw.results.length} slips',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: data.map((entry) {
+              return Expanded(
+                child: Text(entry.key.toString(), textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textSub)),
               );
             }).toList(),
-          ],
-        ),
+          ),
+        ],
       ),
     );
-  }
-
-  Widget _buildEmptyState(BuildContext context) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          children: [
-            const Icon(
-              Icons.analytics_outlined,
-              size: 64,
-              color: AppColors.textDisabled,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'No Data Available',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Start by adding lottery slips and performing draws to see your statistics here.',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.white,
-              ),
-              child: const Text('Get Started'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
   }
 }

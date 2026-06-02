@@ -1,66 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'view_models/lottery_view_model.dart';
-import 'theme/app_colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'viewmodels/pick_viewmodel.dart';
+import 'viewmodels/draw_viewmodel.dart';
+import 'viewmodels/history_viewmodel.dart';
+import 'viewmodels/stats_viewmodel.dart';
 import 'views/home_screen.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  runApp(MyApp(prefs: prefs));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final SharedPreferences prefs;
+  const MyApp({super.key, required this.prefs});
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => LotteryViewModel(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => PickViewModel(prefs)),
+        ChangeNotifierProvider(create: (_) => DrawViewModel(prefs)),
+        ChangeNotifierProvider(create: (_) => HistoryViewModel(prefs)),
+        ChangeNotifierProvider(create: (_) => StatsViewModel(prefs)),
+      ],
       child: MaterialApp(
-        title: 'Lucky Dip Lottery',
+        title: 'LuckyDraw',
         theme: ThemeData(
+          fontFamily: 'Roboto',
           colorScheme: ColorScheme.fromSeed(
-            seedColor: AppColors.primary,
-            primary: AppColors.primary,
-            secondary: AppColors.primaryLight,
-            background: AppColors.background,
-            surface: AppColors.surface,
-            onPrimary: AppColors.white,
-            onSecondary: AppColors.white,
-            onBackground: AppColors.textPrimary,
-            onSurface: AppColors.textPrimary,
+            seedColor: const Color(0xFF0D6B47),
+            primary: const Color(0xFF0D6B47),
           ),
           useMaterial3: true,
-          fontFamily: 'Inter',
-          appBarTheme: const AppBarTheme(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.white,
-            elevation: 0,
-            centerTitle: true,
-          ),
-         
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              elevation: 2,
-            ),
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.primaryExtraLight),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.primaryExtraLight),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.primary),
-            ),
-          ),
         ),
         home: const HomeScreen(),
         debugShowCheckedModeBanner: false,
